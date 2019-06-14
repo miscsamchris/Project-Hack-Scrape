@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'image_model.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 class ItemList extends StatelessWidget{
   final List<ListItem> images;
   ItemList(this.images);
@@ -16,12 +16,16 @@ class ItemList extends StatelessWidget{
   }
 
   Widget buildImage(ListItem image){
-    return Container(
+    return GestureDetector(
+      onDoubleTap: (){
+        _launchURL(image.url);
+      },
+      child: Container(
       padding: EdgeInsets.all(20.0),
       decoration: BoxDecoration(
           border: Border.all(
-              color: Colors.lightGreen
-          )
+              color: Colors.lightGreen,
+          ),
       ),
       margin: EdgeInsets.all(20.0),
       child: Column(
@@ -76,6 +80,15 @@ class ItemList extends StatelessWidget{
           ),
         ],
       ),
+    ),
     );
+  }
+  _launchURL(String link) async {
+    var url = link;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 }
