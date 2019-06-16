@@ -1,6 +1,8 @@
 from flask import Flask,request,redirect,jsonify
 from bs4 import BeautifulSoup
+import time
 import requests
+from selenium import webdriver as wd
 import re
 app = Flask(__name__)
 
@@ -43,28 +45,32 @@ def scrapehackathon():
     return nr
 def scrapehackerearth():
     link="https://www.hackerearth.com/challenges/"
-    request=requests.get(link,verify=False)
-    bs=BeautifulSoup(request.content,"html.parser")
+    browser=wd.Chrome()
+    browser.get(link)
+    res=browser.execute_script("return document.documentElement.outerHTML")
+    browser.quit()
+    bs=BeautifulSoup(res,"html.parser")
     contests=bs.find_all("div",{"class":"challenge-card-modern"})
     nr=[[]]
     for i in contests:
         j=BeautifulSoup(str(i),"html.parser")
-        heading=j.find("a",{"class":"ht-eb-card__title"}).getText()
-        subheading=j.find("div",{"class":"ht-eb-card__description"}).getText()
-        enddate=j.find("div",{"class":"date"}).getText()
-        topic=j.find("div",{"class":"ht-card-tags"}).getText()
-        prize=j.find("div",{"class":"ht-eb-card__prize__name"})
-        url=j.find("a",{"class":"ht-eb-card__title"})["href"]
-        if prize!=None:
-            prize=prize.getText()
-        else:
-            prize="None"
-        nr.append([heading,subheading,enddate,topic,prize,url])
+        test=j.find("div",{"class": "challenge-type light smaller caps weight-600"})
+        if test!=None:
+            if test.getText().strip()=="HACKATHON":
+                heading=j.find("span",{"class":"challenge-list-title challenge-card-wrapper"}).getText()
+                subheading=j.find("div",{"class":"company-details ellipsis"}).getText().strip()
+                enddate=j.find("div",{"id":"days"}).getText()+j.find("div",{"id":"hours"}).getText()+j.find("div",{"id":"minutes"}).getText()
+                enddate=enddate.replace('\n'," ")
+                topic=heading
+                prize="None"
+                url=j.find("a",{"class":"challenge-card-wrapper challenge-card-link"})["href"]
+                nr.append([heading,subheading,enddate,topic,prize,url])
     return nr
 @app.route('/')
 def hello():
     main=scrapehackathon()
     main+=scrapetechgig()
+    main+=scrapehackerearth()
     main=[value for value in main if value != []]
     contests=[]
     for i in range(len(main)):
