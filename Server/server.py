@@ -66,11 +66,35 @@ def scrapehackerearth():
                 url=j.find("a",{"class":"challenge-card-wrapper challenge-card-link"})["href"]
                 nr.append([heading,subheading,enddate,topic,prize,url])
     return nr
+def scraped2c():
+    link="https://dare2compete.com/e/hackathons/ending"
+    browser=wd.Chrome()
+    browser.get(link)
+    browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(5)
+    res=browser.execute_script("return document.documentElement.outerHTML")
+    browser.quit()
+    bs=BeautifulSoup(res,"html.parser")
+    contests=bs.find_all("div",{"class":"search-listing-wrapper clearfix ng-star-inserted"})
+    nr=[[]]
+    for i in contests:
+        j=BeautifulSoup(str(i),"html.parser")
+        heading=j.find("span",{"class":"mr-5"}).getText()
+        subheading=j.find("p",{"class":"single-wrap ng-star-inserted"}).getText().strip()
+        enddate=j.find("span",{"class":"center-align ng-star-inserted"}).getText()
+        enddate=enddate.replace('\n'," ")
+        topic=j.find("div",{"class":"col s5 right-tags"}).getText()
+        topic=topic.replace('#',"")
+        prize="None"
+        url=link
+        nr.append([heading,subheading,enddate,topic,prize,url])
+    return nr
 @app.route('/')
 def hello():
     main=scrapehackathon()
     main+=scrapetechgig()
     main+=scrapehackerearth()
+    main+=scraped2c()
     main=[value for value in main if value != []]
     contests=[]
     for i in range(len(main)):
