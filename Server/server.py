@@ -83,11 +83,74 @@ def scraped2c():
         subheading=j.find("p",{"class":"single-wrap ng-star-inserted"}).getText().strip()
         enddate=j.find("span",{"class":"center-align ng-star-inserted"}).getText()
         enddate=enddate.replace('\n'," ")
-        topic=j.find("div",{"class":"col s5 right-tags"}).getText()
+        topic=j.find("div",{"class":"single-wrap"}).getText()
         topic=topic.replace('#',"")
         prize="None"
         url=link
         nr.append([heading,subheading,enddate,topic,prize,url])
+    return nr
+def scrapeav():
+    link="https://datahack.analyticsvidhya.com/contest/all/"
+    browser=wd.Chrome()
+    browser.get(link)
+    res=browser.execute_script("return document.documentElement.outerHTML")
+    browser.quit()
+    bs=BeautifulSoup(res,"html.parser")
+    contests=bs.find_all("div",{"class":"contest__details infinite-item"})
+    nr=[[]]
+    for i in contests:
+        j=BeautifulSoup(str(i),"html.parser")
+        test=j.find("div",{"class": "tags--upcoming"})
+        if test!=None:
+            if test.getText().strip()=="Upcoming":
+                heading=j.find("span",{"class":"name"}).getText()
+                subheading="None"
+                enddate=j.find("div",{"class":"contest__details--body"}).find_all("p")[0].getText().strip("\n")
+                topic="Machine Learning AI"
+                prize=j.find("div",{"class":"contest__details--body"}).find_all("p")[1].getText().strip("\n")
+                url="https://datahack.analyticsvidhya.com"+j.find("a",{"class":"contest__details__link"})["href"]
+                nr.append([heading,subheading,enddate,topic,prize,url])
+    return nr
+def scrapeskill():
+    link="https://skillenza.com"
+    browser=wd.Chrome()
+    browser.get(link)
+    login=browser.find_element_by_id("navbar")
+    l=login.find_elements_by_tag_name("li")[2]
+    l.click()
+    time.sleep(3)
+    username = browser.find_element_by_name('username')
+    username.send_keys('dummyaccount')    
+    password = browser.find_element_by_name('password')
+    password.send_keys('niceandeasy')
+    form=browser.find_element_by_name('loginForm')
+    sub=form.find_elements_by_tag_name('button')[2]
+    sub.click()
+    time.sleep(3)
+    browser.get(link+"/activities")
+    for i in range(15):
+        browser.execute_script("window.scrollTo(0, document.getElementsByClassName('live-activities animated fadeIn')[0].scrollHeight);")
+        time.sleep(2)
+        browser.execute_script("window.scrollTo(0, document.getElementsByClassName('navbar-header')[0].scrollHeight);")
+        time.sleep(1)
+    res=browser.execute_script("return document.documentElement.outerHTML")
+    browser.quit()
+    bs=BeautifulSoup(res,"html.parser")
+    contests=bs.find_all("a",{"class":"activity-card ng-scope margin-rb"})
+    contests+=bs.find_all("a",{"class":"activity-card ng-scope margin-sb"})
+    contests+=bs.find_all("a",{"class":"activity-card ng-scope margin-lb"})
+    nr=[[]]
+    for i in contests:
+        j=BeautifulSoup(str(i),"html.parser")
+        test=j.find("div",{"class": "activity-name ng-binding"}).getText()
+        if "athon" in test.lower() or  "hack" in test.lower() or "innovation" in test.lower():
+                heading=j.find("div",{"class":"activity-name ng-binding"}).getText()
+                subheading="None"
+                enddate=j.find("div",{"class":"activity-stage-date ng-binding"}).getText().strip("\n")
+                topic=j.find("div",{"class":"activity-tags"}).getText()
+                prize="None"
+                url="https://skillenza.com"+j.find("a")["href"]
+                nr.append([heading,subheading,enddate,topic,prize,url])
     return nr
 @app.route('/')
 def hello():
@@ -95,6 +158,8 @@ def hello():
     main+=scrapetechgig()
     main+=scrapehackerearth()
     main+=scraped2c()
+    main+=scrapeav()
+    main+=scrapeskill()
     main=[value for value in main if value != []]
     contests=[]
     for i in range(len(main)):
